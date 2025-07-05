@@ -1,0 +1,204 @@
+int LedPinRed13 = 13;
+int LedPinRed12 = 12;
+int LedPinRed11 = 11;                    //Leds Vermelhos(pins 10 ao 13)
+int LedPinRed10 = 10;
+
+int LedPinGreen9 = 9;
+int LedPinGreen8 = 8;
+int LedPinGreen7 = 7;                    //Leds Verdes (pins 6 ao 9)
+int LedPinGreen6 = 6;
+
+int RGB_Red = 5;
+int RGB_Blue = 4;
+int RGB_Green = 3;                       //RGB (pins 3 ao 5)
+
+const int buttonPin = 2;
+int buttonState;            
+int lastButtonState = LOW;   
+unsigned long lastDebounceTime = 0;      //Botão(pin2)
+unsigned long debounceDelay = 50;
+unsigned long lastDebounceTime2 = 0;
+
+void setup() {
+Serial.begin(9600);  
+  pinMode(buttonPin, INPUT_PULLUP);      //Botão fica em INPUT_PULLUP
+  
+  pinMode(LedPinRed13, OUTPUT);
+  pinMode(LedPinRed12, OUTPUT);                
+  pinMode(LedPinRed11, OUTPUT);
+  pinMode(LedPinRed10, OUTPUT);
+  
+  pinMode(LedPinGreen9, OUTPUT);
+  pinMode(LedPinGreen8, OUTPUT);        //Leds e RGB ficam em OUTPUT
+  pinMode(LedPinGreen7, OUTPUT);
+  pinMode(LedPinGreen6, OUTPUT);
+  
+  pinMode(RGB_Red, OUTPUT);
+  pinMode(RGB_Green, OUTPUT);
+  pinMode(RGB_Blue, OUTPUT);
+  
+  
+  randomSeed(digitalRead(A0));
+  Serial.println("Welcome to the Bit Math game");                 //Mensagens iniciais
+  Serial.println("Press Button to Start");
+  
+}
+void loop() {
+	int numero1 = random(0,16);
+	int numero2 = random(0,16);                                 //Definir as variavies numero1 e numero2, que vão dar os 2 numeros representados nos leds verdes e vermelhos, respetivamente.
+	int operacao = random(3,6);                                 //vai definir a cor do RGB e a respetiva operação associada
+    int numero = -2;
+  	while(numero == -2){
+     int reading2 = !digitalRead(buttonPin);
+    if(reading2 != lastButtonState){
+      lastDebounceTime2 = millis();
+    }
+    if ((millis()-lastDebounceTime2) >  debounceDelay){             //debounce do primeiro click
+      if(reading2 != buttonState){
+        buttonState = reading2;
+        if(buttonState == HIGH){
+          numero = numero +1;                                       //contagem de clicks
+     }
+   }
+ }
+ lastButtonState = reading2;
+}
+  lastButtonState = LOW;
+  numero = 0;
+  long instant = millis();
+  while ((millis()- instant < 7000)){
+    if ((millis() - instant) < 5){
+      Serial.println("Let's start the game!!!");
+      delay(5);
+    }
+    if ((millis() - instant) == 3500){
+      Serial.println("Já passou 50% do tempo!!");                   //mensagens de tempo
+      delay(1);
+    }
+    if ((millis() - instant) == 5250){
+      Serial.println("Já Passou 75% do tempo!!");
+      delay(1);
+        }
+		int reading = !digitalRead(buttonPin); 
+  		if (reading != lastButtonState) { 
+			lastDebounceTime = millis();                                                                 //Debounce
+		}
+		if ((millis() - lastDebounceTime) > debounceDelay) {
+          	if (buttonState == HIGH && (millis() - lastDebounceTime > 1000)) {
+      		lastDebounceTime = millis();                                                                         //operação reset chamada para clicks maiores que 1 segundo
+      		reset(operacao);
+      		}
+			if (reading != buttonState){
+				buttonState = reading;     
+				if (buttonState == HIGH){
+					numero = numero + 1;
+					if (numero == 0){
+						Serial.println("The game has started!");                                //mostragem dos clicks no serial monitor
+					}else{
+    				Serial.print("Count ");
+					Serial.println(numero);
+					}
+				}
+			}
+		}
+	for(int i=0; i<4; i++){
+     	digitalWrite(6+i,((numero1 >> i) & 1));           //conversão do numero 1
+  	}
+   	 for(int i=0;i<4;i++){
+       digitalWrite(10+i,((numero2 >> i) & 1));          //conversão do numero 2
+   	 }
+  	digitalWrite(operacao, HIGH);
+  	lastButtonState = reading;
+     }
+    if (operacao == 3){
+    if (numero == (numero1 ^ numero2)){                   //operação XOR (cor verde)
+      ModoVitoria(numero1, numero2, operacao);            //se o numero de clicks for igual á operação entre os 2, chama-se a função do modo vitória, que faz o varrimento e mostra a mensagem de vitória
+    } else {
+      ModoDerrota(operacao);                              //se o numero de clicks for diferente á operação entre os 2, chama-se a função do modo derrota para se deligar os leds e mostrar a mensagem de derrota.
+      reset(operacao);                                    
+    }
+  }else if (operacao == 4){                               
+    if(numero == (numero1||numero2)){                     //operação OR (cor azul)   
+      ModoVitoria(numero1, numero2, operacao);            //se o numero de clicks for igual á operação entre os 2, chama-se a função do modo vitória, que faz o varrimento e mostra a mensagem de vitória.
+     }else{
+      ModoDerrota(operacao);                              //se o numero de clicks for diferente á operação entre os 2, chama-se a função do modo derrota para se deligar os leds e mostrar a mensagem de derrota.
+      reset(operacao);                                    
+     }
+  }else{
+    if (numero == (numero1 && numero2)){                  //operação AND (cor vermelha)
+      ModoVitoria(numero1, numero2, operacao);            //se o numero de clicks for igual á operação entre os 2, chama-se a função do modo vitória, que faz o varrimento e mostra a mensagem de vitória.
+    }else{
+      ModoDerrota(operacao);                              //se o numero de clicks for diferente á operação entre os 2, chama-se a função do modo derrota para se deligar os leds e mostrar a mensagem de derrota.
+      reset(operacao);                                    
+    }   
+   }
+ }
+int ModoVitoria(int numero1, int numero2,int operacao){   //função do modo vitória
+  Serial.println("Parabéns, ganhaste o jogo!");
+  for(int i=0;i<5;i++){
+  		for(int i=3 ; i<=13 ; i++){
+     	digitalWrite(i, LOW);
+  		}
+    delay(500);
+    for(int i=0; i<4; i++){                              //Leds e RGB piscam durante 5 segundos
+      digitalWrite(6+i,((numero1 >> i) & 1));
+    }
+    for(int i=0;i<4;i++){
+      digitalWrite(10+i,((numero2 >> i) & 1));
+    }
+    digitalWrite(operacao, HIGH);
+    delay(500);
+  }
+  for(int i=3 ; i<=13 ; i++){
+      digitalWrite(i, LOW);
+  }
+  for(int i=0;i<3;i++){
+    for(int i=6;i<=9;i++){
+      digitalWrite(i,HIGH);
+      digitalWrite((19-i),HIGH);                        //Varrimento vitória
+      delay(500);
+    }
+    for(int i=10;i<=13;i++){
+      digitalWrite(i,LOW);
+      digitalWrite(19-i,LOW);       
+      delay(500);
+    }  
+  }
+  Serial.println("Press Button to Start!");
+}
+int ModoDerrota(int variavel){                        //função do modo derrota
+  Serial.println("perdeste o jogo!");
+  for (int i=6;i<=13;i++) {                           //desligar leds após derrota
+    digitalWrite(i,LOW);
+  }
+  for(int i = 1;i<=5;i++) {         
+    digitalWrite(variavel,LOW);                       //piscar do RGB
+    delay(500);                                                                   
+    digitalWrite(variavel,HIGH);
+    delay(500);
+  }
+  Serial.println("Press Button to Start!");
+}
+int reset(int operacao) {                             //função reset
+    Serial.println("Bit Math Game Reset");               
+    for(int i=3;i<=13;i++){
+      digitalWrite(i, LOW);
+    }
+    for(int i=6;i<=9;i++){
+      digitalWrite(operacao,HIGH);
+      delay(250);
+      digitalWrite(i,HIGH);
+      digitalWrite((19-i), HIGH);                    //varrimento do reset e piscar do RGB
+      digitalWrite(operacao, LOW);
+      delay(250);
+    }
+    for(int i=10;i<=13;i++){
+      digitalWrite(operacao, HIGH);
+      delay(500);
+      digitalWrite(i,LOW);
+      digitalWrite(19-i,LOW);      
+      digitalWrite(operacao, LOW);
+      delay(250);
+    }
+  Serial.println("Press Button to Start");
+}
